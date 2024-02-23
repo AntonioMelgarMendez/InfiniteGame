@@ -1,18 +1,19 @@
 {
   "files": {
     "main.css": "/InfiniteGame/static/css/main.df8923ce.css",
-    "main.js": "/InfiniteGame/static/js/main.86f362cf.js",
+    "main.js": "/InfiniteGame/static/js/main.eebbff35.js",
     "static/js/453.407da643.chunk.js": "/InfiniteGame/static/js/453.407da643.chunk.js",
+    "static/media/video.mp4": "/InfiniteGame/static/media/video.200df2b7c25a094f6c94.mp4",
     "static/media/door.png": "/InfiniteGame/static/media/door.11493d8a40580de29b3b.png",
     "static/media/chara.png": "/InfiniteGame/static/media/chara.aaf437d290d8c6c113f0.png",
     "static/media/logo.svg": "/InfiniteGame/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/InfiniteGame/index.html",
     "main.df8923ce.css.map": "/InfiniteGame/static/css/main.df8923ce.css.map",
-    "main.86f362cf.js.map": "/InfiniteGame/static/js/main.86f362cf.js.map",
+    "main.eebbff35.js.map": "/InfiniteGame/static/js/main.eebbff35.js.map",
     "453.407da643.chunk.js.map": "/InfiniteGame/static/js/453.407da643.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.df8923ce.css",
-    "static/js/main.86f362cf.js"
+    "static/js/main.eebbff35.js"
   ]
 }
