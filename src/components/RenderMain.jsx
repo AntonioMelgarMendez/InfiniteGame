@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import char from "../sources/chara.png";
 import door from "../sources/door.png";
+import spike from "../sources/spike.png";
 import video1 from "../sources/video.mp4"; 
 const RenderMain = () => {
   const containerSize = 500;
@@ -9,16 +10,18 @@ const RenderMain = () => {
   const characterRef = useRef(new Image());
   const doorRef = useRef(new Image());
   const [wallDesigns] = useState(generateWallDesigns());
+  const [spikeDesigns]= useState(generateSpikeDesigns());
   const [showVideo, setShowVideo] = useState(false);
    const [videoUrl, setVideoUrl] = useState('');
-   const [wallPositions, setWallPositions] = useState(generateRandomWalls(4));
-   const initialPositions = generateValidInitialPositions(wallPositions);
+   const [wallPositions, setWallPositions] = useState(generateRandomWalls(3, 6));
+   const [spikePositions, setSpikePositions]=useState(generateRandomSpikes(2,6,wallPositions));
+   const initialPositions = generateValidInitialPositions(wallPositions,spikePositions);
    const [characterPosition, setCharacterPosition] = useState(initialPositions.characterPosition);
   const [doorPosition, setDoorPosition] = useState(initialPositions.doorPosition);
   const [characterKey, setCharacterKey] = useState(0);
   const [level, setLevel] = useState(1);
   const [lastMoveTime, setLastMoveTime] = useState(0);
-  function generateValidInitialPositions(walls) {
+  function generateValidInitialPositions(walls, spikes) {
     let characterPosition, doorPosition, isOverlap;
   
     do {
@@ -27,29 +30,34 @@ const RenderMain = () => {
       doorPosition = positions.doorPosition;
   
       // Verificar si las posiciones iniciales colisionan con los muros
-      const characterOverlap = walls.some((wall) => {
+      const characterOverlapWithWalls = walls.some((wall) => {
         if (wall.bricks) {
-          return wall.bricks.some((brick) =>
-            checkOverlap(characterPosition, brick)
-          );
+          return wall.bricks.some((brick) => checkOverlap(characterPosition, brick));
         }
         return false;
       });
   
-      const doorOverlap = walls.some((wall) => {
+      const doorOverlapWithWalls = walls.some((wall) => {
         if (wall.bricks) {
-          return wall.bricks.some((brick) =>
-            checkOverlap(doorPosition, brick)
-          );
+          return wall.bricks.some((brick) => checkOverlap(doorPosition, brick));
         }
         return false;
       });
   
-      isOverlap = characterOverlap || doorOverlap;
+      // Verificar si las posiciones iniciales colisionan con los pinchos
+      const characterOverlapWithSpikes = spikes.some((spike) => checkOverlap(characterPosition, spike));
+      const doorOverlapWithSpikes = spikes.some((spike) => checkOverlap(doorPosition, spike));
+  
+      isOverlap =
+        characterOverlapWithWalls ||
+        doorOverlapWithWalls ||
+        characterOverlapWithSpikes ||
+        doorOverlapWithSpikes;
     } while (isOverlap);
   
     return { characterPosition, doorPosition };
   }
+  
   
   function generateRandomPositionInSquare() {
     const squareX = Math.floor(Math.random() * (containerSize / squareSize));
@@ -70,74 +78,90 @@ const RenderMain = () => {
     );
   }
   
-  function generateRandomWalls(count) {
-    const walls = [];
-    const minDistanceSquared = 2000; // Aumentamos la distancia mínima
-  
-    for (let i = 0; i < count; i++) {
-      let randomDesign, wall, isOverlap;
-  
-      do {
-        randomDesign = wallDesigns[Math.floor(Math.random() * wallDesigns.length)];
-        wall = generateRandomPositionInSquare();
-        isOverlap = randomDesign && randomDesign.some(brick =>
-          walls.some(existingWall =>
-            checkOverlap(wall, existingWall)
-          )
-        );
-      } while (isOverlap);
-  
-      // Guardar las coordenadas de cada ladrillo individual directamente
-      const brickCoordinates = randomDesign.map(brick => ({
-        x: wall.x + brick.x,
-        y: wall.y + brick.y
-      }));
-  
-      // Empujar un objeto que contiene las coordenadas de los ladrillos al array de paredes
-      walls.push({ bricks: brickCoordinates });
-    }
-  
-    return walls;
+ function generateRandomWalls(minCount, maxCount) {
+  const wallCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+  const walls = [];
+  const minDistanceSquared = 2000; // Aumentamos la distancia mínima
+
+  for (let i = 0; i < wallCount; i++) {
+    let randomDesign, wall, isOverlap;
+
+    do {
+      randomDesign = wallDesigns[Math.floor(Math.random() * wallDesigns.length)];
+      wall = generateRandomPositionInSquare();
+      isOverlap = randomDesign && randomDesign.some(brick =>
+        walls.some(existingWall =>
+          checkOverlap(wall, existingWall)
+        )
+      );
+    } while (isOverlap);
+
+    // Guardar las coordenadas de cada ladrillo individual directamente
+    const brickCoordinates = randomDesign.map(brick => ({
+      x: wall.x + brick.x,
+      y: wall.y + brick.y
+    }));
+
+    // Empujar un objeto que contiene las coordenadas de los ladrillos al array de paredes
+    walls.push({ bricks: brickCoordinates });
   }
+
+  return walls;
+}
+function generateRandomSpikes(minCount, maxCount, walls) {
+  const spikeCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+  const spikes = [];
+
+  for (let i = 0; i < spikeCount; i++) {
+    let randomPosition, isOverlap;
+
+    do {
+      randomPosition = generateRandomPositionInSquare();
+      // Verificar si hay superposición con los muros
+      isOverlap = walls.some(wall => {
+        if (wall.bricks) {
+          return wall.bricks.some(brick => checkOverlap(randomPosition, brick));
+        }
+        return false;
+      });
+    } while (isOverlap);
+
+    spikes.push(randomPosition);
+  }
+
+  return spikes;
+}
+
+
   
   // ...
-  
-  function generateRandomPositionForCharacterAndDoor(walls) {
-    const minDistance = 300; // Adjust this value based on your requirements
-    let characterPosition, doorPosition, isOverlap;
-    let allBricks = walls.flatMap(w => w.bricks);
-  
-    do {
-      characterPosition = generateRandomPositionInSquare();
-      doorPosition = generateRandomPositionInSquare();
-  
-      // Calculate the distance between character and door
-      const distance = Math.hypot(
-        doorPosition.x - characterPosition.x,
-        doorPosition.y - characterPosition.y
-      );
-  
-      // Imprimir información de depuración
-      console.log('Posiciones ocupadas:', allBricks);
-      console.log('Personaje:', characterPosition);
-      console.log('Puerta:', doorPosition);
-      console.log('Distancia:', distance);
-  
-      // Check if there is an overlap or the distance is less than the minimum
-      const characterOverlap = allBricks.some(brick =>
-        brick && checkOverlap(characterPosition, brick)
-      );
-      const doorOverlap = allBricks.some(brick =>
-        brick && checkOverlap(doorPosition, brick)
-      );
-      isOverlap = characterOverlap || doorOverlap || distance < minDistance;
-    } while (isOverlap);
-  
-    return { characterPosition, doorPosition, allBricks };
-  }
-  
-  
+function generateRandomPositionForCharacterAndDoor(walls) {
+  const minDistance = 300; // Ajusta este valor según tus necesidades
+  let characterPosition, doorPosition, isOverlap;
+  let allBricks = walls.flatMap(w => w.bricks);
 
+  do {
+    characterPosition = generateRandomPositionInSquare();
+    doorPosition = generateRandomPositionInSquare();
+
+    // Verificar si hay alguna superposición o la distancia es menor que el mínimo
+    const characterOverlap = allBricks.some(brick =>
+      brick && checkOverlap(characterPosition, brick)
+    );
+    const doorOverlap = allBricks.some(brick =>
+      brick && checkOverlap(doorPosition, brick)
+    );
+
+    const distance = Math.hypot(
+      doorPosition.x - characterPosition.x,
+      doorPosition.y - characterPosition.y
+    );
+
+    isOverlap = characterOverlap || doorOverlap || distance < minDistance;
+  } while (isOverlap);
+
+  return { characterPosition, doorPosition, allBricks };
+}
   function generateWallDesigns() {
     return [
       [
@@ -200,10 +224,66 @@ const RenderMain = () => {
         { x: 100, y: 50 },
         { x: 100, y: 100 },
       ],
-      // Agrega más diseños según tus necesidades
+          [
+      { x: 0, y: 0 },
+      { x: 25, y: 50 },
+      { x: 50, y: 0 },
+      { x: 75, y: 50 },
+      { x: 100, y: 0 },
+    ],
+    [
+      { x: 0, y: 0 },
+      { x: 0, y: 50 },
+      { x: 50, y: 50 },
+      { x: 100, y: 50 },
+      { x: 150, y: 50 },
+      { x: 150, y: 0 },
+    ],
+    [
+      { x: 0, y: 0 },
+      { x: 50, y: 0 },
+      { x: 100, y: 0 },
+      { x: 75, y: 50 },
+      { x: 50, y: 100 },
+      { x: 25, y: 50 },
+    ],
+    [
+    { x: 0, y: 0 },
+    { x: 50, y: 0 },
+    { x: 50, y: 50 },
+    { x: 100, y: 50 },
+    { x: 100, y: 100 },
+    { x: 50, y: 100 },
+    { x: 50, y: 150 },
+    { x: 0, y: 150 },
+    { x: 0, y: 100 },
+    { x: -50, y: 100 },
+    { x: -50, y: 50 },
+    { x: 0, y: 50 },
+  ]
     ];
   }
-  
+  function generateSpikeDesigns() {
+    return [
+      [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 100, y: 0 },
+        { x: 150, y: 0 },
+      ],
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 50 },
+        { x: 50, y: 50 },
+        { x: 100, y: 50 },
+        { x: 50, y: 0 },
+      ]
+  ];
+  }
+  function resetGame() {
+    // Recargar la página
+    window.location.reload();
+  }
   function handleKeyPress(event) {
     const speed = 50;
     const now = Date.now();
@@ -235,16 +315,29 @@ const RenderMain = () => {
       }
   
       // Verificar colisión con muros
-      const isCollision = wallPositions.some((wall) => {
+      const isCollisionWithWalls = wallPositions.some((wall) => {
         if (wall.bricks) {
-          return wall.bricks.some((brick) =>
-            checkOverlap(newPosition, brick)
-          );
+          return wall.bricks.some((brick) => checkOverlap(newPosition, brick));
         }
         return false;
       });
   
-      return isCollision ? prevPosition : newPosition;
+      if (isCollisionWithWalls) {
+        // El personaje muere al tocar un muro
+        resetGame(); // Puedes definir esta función para reiniciar el juego
+        return prevPosition;
+      }
+  
+      // Verificar colisión con pinchos
+      const isCollisionWithSpikes = spikePositions.some((spike) => checkOverlap(newPosition, spike));
+  
+      if (isCollisionWithSpikes) {
+        // El personaje muere al tocar una spike
+        resetGame(); // Puedes definir esta función para reiniciar el juego
+        return prevPosition;
+      }
+  
+      return newPosition;
     });
   
     setCharacterKey((prev) => prev + 1);
@@ -273,17 +366,19 @@ const RenderMain = () => {
     console.log("Personaje tocando la puerta. Actualizando muros y generando nuevas posiciones...");
   
     // Actualizar muros antes de generar nuevas posiciones
-    const newWallPositions = generateRandomWalls(4);
+    const newWallPositions = generateRandomWalls(3,6);
+    const newSpikePositions = generateRandomSpikes(2, 6, newWallPositions);
     setWallPositions(newWallPositions);
-  
+    setSpikePositions(newSpikePositions);
     const { characterPosition, doorPosition } = generateRandomPositionForCharacterAndDoor(newWallPositions);
     console.log("Nuevas posiciones generadas:", characterPosition, doorPosition);
-  
+
+
     setDoorPosition(doorPosition);
     setCharacterPosition(characterPosition);
     setLevel((prevLevel) => prevLevel + 1);
   
-    const shouldShowVideo = Math.random() < (0.30+(level/100)); // Cambia esto según tus criterios
+    const shouldShowVideo = Math.random() < ((level/100)); // Cambia esto según tus criterios
     setShowVideo(shouldShowVideo);
   
     if (shouldShowVideo) {
@@ -317,63 +412,84 @@ const RenderMain = () => {
       };
     }
   }, [showVideo]);
-
+  function fillPolygon(ctx, vertices) {
+    ctx.beginPath();
+    ctx.moveTo(vertices[0].x, vertices[0].y);
   
-useEffect(() => {
-  const canvas = canvasRef.current;
-
-  // Verificar si el canvas existe antes de continuar
-  if (!canvas) {
-    return;
-  }
-
-  const ctx = canvas.getContext('2d');
-
-  // Limpiar el canvas
-  ctx.clearRect(0, 0, containerSize, containerSize);
-
-  // Dibujar cuadrados internos en rosado con bordes
-  ctx.fillStyle = 'white';
-  ctx.strokeStyle = 'gray';  // Color del borde
-  ctx.lineWidth = 2;  // Ancho del borde
-
-  for (let x = 0; x < containerSize; x += squareSize) {
-    for (let y = 0; y < containerSize; y += squareSize) {
-      ctx.fillRect(x, y, squareSize, squareSize);
-      ctx.strokeRect(x, y, squareSize, squareSize);  // Dibujar el borde
+    for (let i = 1; i < vertices.length; i++) {
+      ctx.lineTo(vertices[i].x, vertices[i].y);
     }
+  
+    ctx.closePath();
+    ctx.fill();
   }
-
-  // Dibujar la puerta
-  const doorImg = doorRef.current;
-  doorImg.src = door;
-  doorImg.onload = () => {
-    ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, 50, 50);
-  };
-
-  const characterImg = characterRef.current;
-  characterImg.src = char;
-  characterImg.onload = () => {
-    ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
-  };
-
-  ctx.fillStyle = 'brown';
-  wallPositions.forEach((wall) => {
-    if (wall.bricks) {
-      wall.bricks.forEach((brick) => {
-        ctx.fillRect(brick.x, brick.y, 50, 50);
-      });
+  
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+  
+    // Verificar si el canvas existe antes de continuar
+    if (!canvas) {
+      return;
     }
-  });
-
-  // Level rendering outside the canvas
-  ctx.font = '20px Arial';
-  ctx.fillStyle = 'black';
-  ctx.fillText(`Nivel: ${level}`, 10, 30);
-
-}, [characterKey, doorPosition, wallPositions, level]);
-
-
+  
+    const ctx = canvas.getContext('2d');
+  
+    // Limpiar el canvas
+    ctx.clearRect(0, 0, containerSize, containerSize);
+  
+    // Dibujar cuadrados internos en rosado con bordes
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = 'gray';  // Color del borde
+    ctx.lineWidth = 2;  // Ancho del borde
+  
+    for (let x = 0; x < containerSize; x += squareSize) {
+      for (let y = 0; y < containerSize; y += squareSize) {
+        ctx.fillRect(x, y, squareSize, squareSize);
+        ctx.strokeRect(x, y, squareSize, squareSize);  // Dibujar el borde
+      }
+    }
+  
+    const characterImg = characterRef.current;
+    characterImg.src = char;
+    characterImg.onload = () => {
+      ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
+    };
+  
+    const doorImg = doorRef.current;
+    doorImg.src = door;
+    doorImg.onload = () => {
+      ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, 50, 50);
+    };
+  
+    ctx.fillStyle = 'brown';
+    wallPositions.forEach((wall) => {
+      if (wall.bricks) {
+        wall.bricks.forEach((brick) => {
+          ctx.fillRect(brick.x, brick.y, 50, 50);
+        });
+      }
+    });
+  
+    // Renderizar los pinchos
+    ctx.fillStyle = 'gray'; // Cambia el color a gris
+    spikePositions.forEach((spike) => {
+      const spikeVertices = [
+        { x: spike.x + 25, y: spike.y }, // Punto superior
+        { x: spike.x, y: spike.y + 50 }, // Punto inferior izquierdo
+        { x: spike.x + 50, y: spike.y + 50 } // Punto inferior derecho
+      ];
+    
+      fillPolygon(ctx, spikeVertices);
+    });
+  
+    // Level rendering outside the canvas
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'black';
+    ctx.fillText(`Nivel: ${level}`, 10, 30);
+  
+  }, [characterKey, doorPosition, wallPositions, spikePositions, level]);
+  
 
 
   
