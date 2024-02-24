@@ -10,24 +10,24 @@ const RenderMain = () => {
   const doorRef = useRef(new Image());
   const [wallDesigns] = useState(generateWallDesigns());
   const [showVideo, setShowVideo] = useState(false);
-const [videoUrl, setVideoUrl] = useState('');
-  const initialPositions = generateRandomPositionForCharacterAndDoor(wallDesigns);
-  const [characterPosition, setCharacterPosition] = useState(initialPositions.characterPosition);
-  const [doorPosition, setDoorPosition] = useState(initialPositions.doorPosition);  
-  const [wallPositions, setWallPositions] = useState(generateRandomWalls(4));
+   const [videoUrl, setVideoUrl] = useState('');
+   const [wallPositions, setWallPositions] = useState(generateRandomWalls(4));
+   const initialPositions = generateValidInitialPositions(wallPositions);
+   const [characterPosition, setCharacterPosition] = useState(initialPositions.characterPosition);
+  const [doorPosition, setDoorPosition] = useState(initialPositions.doorPosition);
   const [characterKey, setCharacterKey] = useState(0);
   const [level, setLevel] = useState(1);
   const [lastMoveTime, setLastMoveTime] = useState(0);
-  function generateValidInitialPositions() {
+  function generateValidInitialPositions(walls) {
     let characterPosition, doorPosition, isOverlap;
   
     do {
-      const positions = generateRandomPositionForCharacterAndDoor(wallPositions);
+      const positions = generateRandomPositionForCharacterAndDoor(walls);
       characterPosition = positions.characterPosition;
       doorPosition = positions.doorPosition;
   
       // Verificar si las posiciones iniciales colisionan con los muros
-      const characterOverlap = wallPositions.some((wall) => {
+      const characterOverlap = walls.some((wall) => {
         if (wall.bricks) {
           return wall.bricks.some((brick) =>
             checkOverlap(characterPosition, brick)
@@ -36,7 +36,7 @@ const [videoUrl, setVideoUrl] = useState('');
         return false;
       });
   
-      const doorOverlap = wallPositions.some((wall) => {
+      const doorOverlap = walls.some((wall) => {
         if (wall.bricks) {
           return wall.bricks.some((brick) =>
             checkOverlap(doorPosition, brick)
@@ -50,6 +50,7 @@ const [videoUrl, setVideoUrl] = useState('');
   
     return { characterPosition, doorPosition };
   }
+  
   function generateRandomPositionInSquare() {
     const squareX = Math.floor(Math.random() * (containerSize / squareSize));
     const squareY = Math.floor(Math.random() * (containerSize / squareSize));
@@ -102,6 +103,7 @@ const [videoUrl, setVideoUrl] = useState('');
   // ...
   
   function generateRandomPositionForCharacterAndDoor(walls) {
+    const minDistance = 300; // Adjust this value based on your requirements
     let characterPosition, doorPosition, isOverlap;
     let allBricks = walls.flatMap(w => w.bricks);
   
@@ -109,23 +111,31 @@ const [videoUrl, setVideoUrl] = useState('');
       characterPosition = generateRandomPositionInSquare();
       doorPosition = generateRandomPositionInSquare();
   
+      // Calculate the distance between character and door
+      const distance = Math.hypot(
+        doorPosition.x - characterPosition.x,
+        doorPosition.y - characterPosition.y
+      );
+  
       // Imprimir información de depuración
       console.log('Posiciones ocupadas:', allBricks);
       console.log('Personaje:', characterPosition);
       console.log('Puerta:', doorPosition);
+      console.log('Distancia:', distance);
   
+      // Check if there is an overlap or the distance is less than the minimum
       const characterOverlap = allBricks.some(brick =>
         brick && checkOverlap(characterPosition, brick)
       );
       const doorOverlap = allBricks.some(brick =>
         brick && checkOverlap(doorPosition, brick)
       );
-  
-      isOverlap = characterOverlap || doorOverlap;
+      isOverlap = characterOverlap || doorOverlap || distance < minDistance;
     } while (isOverlap);
   
     return { characterPosition, doorPosition, allBricks };
   }
+  
   
 
   function generateWallDesigns() {
@@ -254,31 +264,59 @@ const [videoUrl, setVideoUrl] = useState('');
   // ...
   useEffect(() => {
     if (isCharacterTouchingDoor()) {
-      console.log("Personaje tocando la puerta. Actualizando muros y generando nuevas posiciones...");
-      
-      // Actualizar muros antes de generar nuevas posiciones
-      const newWallPositions = generateRandomWalls(4);
-      setWallPositions(newWallPositions);
-  
-      const { characterPosition, doorPosition } = generateRandomPositionForCharacterAndDoor(newWallPositions);
-      console.log("Nuevas posiciones generadas:", characterPosition, doorPosition);
-  
-      setDoorPosition(doorPosition);
-      setCharacterPosition(characterPosition);
-      setLevel((prevLevel) => prevLevel + 1);
-  
-      const shouldShowVideo = Math.random() < 0.5; // Cambia esto según tus criterios
-      setShowVideo(shouldShowVideo);
-  
-      if (shouldShowVideo) {
-        const videoUrls = [video1];
-        const randomVideoUrl = videoUrls[Math.floor(Math.random() * videoUrls.length)];
-        setVideoUrl(randomVideoUrl);
-      }
+      // Llamar a la función para manejar el cambio de nivel
+      handleLevelChange();
     }
   }, [characterPosition, doorPosition, wallPositions, level]);
 
-// ...
+  const handleLevelChange = () => {
+    console.log("Personaje tocando la puerta. Actualizando muros y generando nuevas posiciones...");
+  
+    // Actualizar muros antes de generar nuevas posiciones
+    const newWallPositions = generateRandomWalls(4);
+    setWallPositions(newWallPositions);
+  
+    const { characterPosition, doorPosition } = generateRandomPositionForCharacterAndDoor(newWallPositions);
+    console.log("Nuevas posiciones generadas:", characterPosition, doorPosition);
+  
+    setDoorPosition(doorPosition);
+    setCharacterPosition(characterPosition);
+    setLevel((prevLevel) => prevLevel + 1);
+  
+    const shouldShowVideo = Math.random() < (0.30+(level/100)); // Cambia esto según tus criterios
+    setShowVideo(shouldShowVideo);
+  
+    if (shouldShowVideo) {
+      const videoUrls = [video1];
+      const randomVideoUrl = videoUrls[Math.floor(Math.random() * videoUrls.length)];
+      setVideoUrl(randomVideoUrl);
+    }
+  };
+  useEffect(() => {
+    if (showVideo) {
+      const videoElement = document.getElementById("game-video");
+  
+      // Verificar el estado del video directamente
+      const checkVideoEnd = () => {
+        if (videoElement.currentTime >= videoElement.duration) {
+          console.log("Video terminado. Continuando al siguiente video o nivel...");
+          
+          setLevel((prevLevel) => prevLevel -1);
+          handleLevelChange();
+        } else {
+          // Si el video no ha terminado, sigue verificando
+          requestAnimationFrame(checkVideoEnd);
+        }
+      };
+  
+      // Comenzar la verificación
+      checkVideoEnd();
+  
+      return () => {
+        // Puedes detener cualquier acción relacionada con la verificación aquí si es necesario
+      };
+    }
+  }, [showVideo]);
 
   
 useEffect(() => {
@@ -306,16 +344,17 @@ useEffect(() => {
     }
   }
 
-  const characterImg = characterRef.current;
-  characterImg.src = char;
-  characterImg.onload = () => {
-    ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
-  };
-
+  // Dibujar la puerta
   const doorImg = doorRef.current;
   doorImg.src = door;
   doorImg.onload = () => {
     ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, 50, 50);
+  };
+
+  const characterImg = characterRef.current;
+  characterImg.src = char;
+  characterImg.onload = () => {
+    ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
   };
 
   ctx.fillStyle = 'brown';
@@ -327,11 +366,13 @@ useEffect(() => {
     }
   });
 
+  // Level rendering outside the canvas
   ctx.font = '20px Arial';
   ctx.fillStyle = 'black';
   ctx.fillText(`Nivel: ${level}`, 10, 30);
 
 }, [characterKey, doorPosition, wallPositions, level]);
+
 
 
 
@@ -348,13 +389,16 @@ useEffect(() => {
     <div className="flex items-center justify-center h-screen">
       {showVideo ? (
         <video
-  width="560"
-  height="315"
+  id="game-video"
+  width="100%"
+  height="100%"
   autoPlay
   controls={false}
+  preload="auto"  // Ensure the video is preloaded
 >
   <source src={videoUrl} type="video/mp4" />
 </video>
+
       ) : (
         <canvas
           ref={canvasRef}
