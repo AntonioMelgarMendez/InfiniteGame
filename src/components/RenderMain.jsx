@@ -5,7 +5,8 @@ import spike from "../sources/spike.png";
 import video1 from "../sources/video.mp4"; 
 import skull from "../sources/skull.png";
 import Queue from '../components/Queue';
-const RenderMain = () => {
+
+const RenderMain = ({ onBackToMenu }) => {
   const containerSize = 500;
   const squareSize = 50; // Tamaño de los cuadrados internos
   const canvasRef = useRef(null);
@@ -24,6 +25,24 @@ const RenderMain = () => {
   const [characterKey, setCharacterKey] = useState(0);
   const [level, setLevel] = useState(1);
   const [lastMoveTime, setLastMoveTime] = useState(0);
+  const resetGame = () => {
+    setGameOver(true);
+    // También puedes realizar otras acciones de reinicio aquí según sea necesario
+  };
+
+  const restartGame = () => {
+    // Restablecer el estado del juego y volver al nivel 1
+    setGameOver(false);
+    setLevel(0);
+    handleLevelChange();
+
+    // Otras lógicas de reinicio si es necesario
+  };
+
+  const exitToMenu = () => {
+    // Salir al menú principal
+    onBackToMenu();
+  };
   function generateValidInitialPositions(walls, spikes) {
     let characterPosition, doorPosition, isOverlap;
   
@@ -332,11 +351,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
       ]
   ];
   }
-  function resetGame() {
-    // Aquí puedes establecer un estado indicando que el juego ha terminado
-    // Por ejemplo, usando un estado booleano como 'gameOver'
-    setGameOver(true);
-  }
+
   function handleKeyPress(event) {
     const speed = 50;
     const now = Date.now();
@@ -557,17 +572,25 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   return (
     <div className="flex items-center justify-center h-screen">
       {GameOver ? (
-        // Pantalla de muerte
-        <div className="h-screen w-screen flex items-center justify-center">
+// Pantalla de muerte
+<div className="h-screen w-screen flex items-center justify-center">
   <div className="bg-white border-4 border-black p-8 text-center flex flex-col items-center w-500 h-500">
-    <h1 className="text-3xl mb-4">¡Has muerto!</h1>
+    <h1 className="text-3xl mb-4">¡You're dead!</h1>
     <img src={skull} width={80} height={50} className="mb-4" />
+    <div className="flex space-x-4">
     <button
-      className="px-4 py-2 bg-black text-white rounded hover:bg-gray-600 cursor-pointer"
-      onClick={() => window.location.reload()}
-    >
-      Reiniciar
-    </button>
+        className="px-4 py-2 bg-black text-white rounded-full hover:bg-gray-600 cursor-pointer w-32" // Ancho fijo
+        onClick={restartGame}
+      >
+        Restart
+      </button>
+      <button
+        className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 cursor-pointer w-32" // Ancho fijo
+        onClick={exitToMenu}
+      >
+        Exit
+      </button>
+    </div>
   </div>
 </div>
 
