@@ -3,6 +3,8 @@ import char from "../sources/chara.png";
 import door from "../sources/door.png";
 import spike from "../sources/spike.png";
 import video1 from "../sources/video.mp4"; 
+import skull from "../sources/skull.png";
+import Queue from '../components/Queue';
 const RenderMain = () => {
   const containerSize = 500;
   const squareSize = 50; // Tamaño de los cuadrados internos
@@ -10,6 +12,7 @@ const RenderMain = () => {
   const characterRef = useRef(new Image());
   const doorRef = useRef(new Image());
   const [wallDesigns] = useState(generateWallDesigns());
+  const [GameOver, setGameOver]= useState(false);
   const [spikeDesigns]= useState(generateSpikeDesigns());
   const [showVideo, setShowVideo] = useState(false);
    const [videoUrl, setVideoUrl] = useState('');
@@ -68,15 +71,25 @@ const RenderMain = () => {
 
     return { x, y };
   }
-  function checkOverlap(positionA, positionB) {
+function checkOverlap(position, obstacle) {
+  if (obstacle.bricks) {
+    return obstacle.bricks.some((brick) =>
+      position.x < brick.x + 50 &&
+      position.x + 50 > brick.x &&
+      position.y < brick.y + 50 &&
+      position.y + 50 > brick.y
+    );
+  } else {
+    // Considerar las coordenadas directas para las espigas
     return (
-      positionA && positionB &&
-      positionA.x < positionB.x + 50 &&
-      positionA.x + 50 > positionB.x &&
-      positionA.y < positionB.y + 50 &&
-      positionA.y + 50 > positionB.y
+      position.x < obstacle.x + 50 &&
+      position.x + 50 > obstacle.x &&
+      position.y < obstacle.y + 50 &&
+      position.y + 50 > obstacle.y
     );
   }
+}
+
   
  function generateRandomWalls(minCount, maxCount) {
   const wallCount = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
@@ -135,33 +148,72 @@ function generateRandomSpikes(minCount, maxCount, walls) {
 
   
   // ...
-function generateRandomPositionForCharacterAndDoor(walls) {
-  const minDistance = 300; // Ajusta este valor según tus necesidades
-  let characterPosition, doorPosition, isOverlap;
-  let allBricks = walls.flatMap(w => w.bricks);
-
-  do {
-    characterPosition = generateRandomPositionInSquare();
-    doorPosition = generateRandomPositionInSquare();
-
-    // Verificar si hay alguna superposición o la distancia es menor que el mínimo
-    const characterOverlap = allBricks.some(brick =>
-      brick && checkOverlap(characterPosition, brick)
-    );
-    const doorOverlap = allBricks.some(brick =>
-      brick && checkOverlap(doorPosition, brick)
-    );
-
-    const distance = Math.hypot(
-      doorPosition.x - characterPosition.x,
-      doorPosition.y - characterPosition.y
-    );
-
-    isOverlap = characterOverlap || doorOverlap || distance < minDistance;
-  } while (isOverlap);
-
-  return { characterPosition, doorPosition, allBricks };
-}
+  function generateRandomPositionForCharacterAndDoor(walls) {
+    const minDistance = 300;
+    let characterPosition, doorPosition, isOverlap;
+    let allBricks = walls.flatMap(w => w.bricks);
+  
+    do {
+      characterPosition = generateRandomPositionInSquare();
+      doorPosition = generateRandomPositionInSquare();
+  
+      const characterOverlap = allBricks.some(brick =>
+        brick && checkOverlap(characterPosition, brick)
+      );
+      const doorOverlap = allBricks.some(brick =>
+        brick && checkOverlap(doorPosition, brick)
+      );
+  
+      const distance = Math.hypot(
+        doorPosition.x - characterPosition.x,
+        doorPosition.y - characterPosition.y
+      );
+  
+      isOverlap = characterOverlap || doorOverlap || distance < minDistance;
+  
+      // Verificar si hay un camino entre el personaje y la puerta
+      if (!isOverlap) {
+        const pathExists = checkPathExists(characterPosition, doorPosition, walls);
+        isOverlap = !pathExists;
+      }
+    } while (isOverlap);
+  
+    return { characterPosition, doorPosition, allBricks };
+  }
+  function checkPathExists(start, end, walls) {
+    const visited = new Set();
+    const queue = new Queue();
+  
+    queue.enqueue(start);
+    visited.add(JSON.stringify(start));
+  
+    while (!queue.isEmpty()) {
+      const current = queue.dequeue();
+  
+      if (current.x === end.x && current.y === end.y) {
+        // Se encontró un camino
+        return true;
+      }
+  
+      // Obtener vecinos
+      const neighbors = [
+        { x: current.x + squareSize, y: current.y },
+        { x: current.x - squareSize, y: current.y },
+        { x: current.x, y: current.y + squareSize },
+        { x: current.x, y: current.y - squareSize },
+      ];
+  
+      for (const neighbor of neighbors) {
+        if (!visited.has(JSON.stringify(neighbor)) && !checkOverlap(neighbor, walls)) {
+          queue.enqueue(neighbor);
+          visited.add(JSON.stringify(neighbor));
+        }
+      }
+    }
+  
+    // No se encontró un camino
+    return false;
+  }
   function generateWallDesigns() {
     return [
       [
@@ -281,8 +333,9 @@ function generateRandomPositionForCharacterAndDoor(walls) {
   ];
   }
   function resetGame() {
-    // Recargar la página
-    window.location.reload();
+    // Aquí puedes establecer un estado indicando que el juego ha terminado
+    // Por ejemplo, usando un estado booleano como 'gameOver'
+    setGameOver(true);
   }
   function handleKeyPress(event) {
     const speed = 50;
@@ -323,8 +376,7 @@ function generateRandomPositionForCharacterAndDoor(walls) {
       });
   
       if (isCollisionWithWalls) {
-        // El personaje muere al tocar un muro
-        resetGame(); // Puedes definir esta función para reiniciar el juego
+        // Si hay colisión con algún ladrillo de un muro, no actualizar la posición
         return prevPosition;
       }
   
@@ -344,6 +396,7 @@ function generateRandomPositionForCharacterAndDoor(walls) {
   }
   
   
+
 
   function isCharacterTouchingDoor() {
     return (
@@ -503,30 +556,45 @@ function generateRandomPositionForCharacterAndDoor(walls) {
   }, [lastMoveTime]);
   return (
     <div className="flex items-center justify-center h-screen">
-      {showVideo ? (
-        <video
-  id="game-video"
-  width="100%"
-  height="100%"
-  autoPlay
-  controls={false}
-  preload="auto"  // Ensure the video is preloaded
->
-  <source src={videoUrl} type="video/mp4" />
-</video>
+      {GameOver ? (
+        // Pantalla de muerte
+        <div className="h-screen w-screen flex items-center justify-center">
+  <div className="bg-white border-4 border-black p-8 text-center flex flex-col items-center w-500 h-500">
+    <h1 className="text-3xl mb-4">¡Has muerto!</h1>
+    <img src={skull} width={80} height={50} className="mb-4" />
+    <button
+      className="px-4 py-2 bg-black text-white rounded hover:bg-gray-600 cursor-pointer"
+      onClick={() => window.location.reload()}
+    >
+      Reiniciar
+    </button>
+  </div>
+</div>
 
       ) : (
-        <canvas
-          ref={canvasRef}
-          className="bg-white border-8 border-black cursor-pointer"
-          width={containerSize}
-          height={containerSize}
-        />
+        // Resto del contenido del juego
+        showVideo ? (
+          <video
+            id="game-video"
+            width="100%"
+            height="100%"
+            autoPlay
+            controls={false}
+            preload="auto"
+          >
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="bg-white border-8 border-black cursor-pointer"
+            width={containerSize}
+            height={containerSize}
+          />
+        )
       )}
     </div>
   );
-
-  
-};
+        };
 
 export default RenderMain;
