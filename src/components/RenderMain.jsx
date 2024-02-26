@@ -5,13 +5,18 @@ import spike from "../sources/spike.png";
 import video1 from "../sources/video.mp4"; 
 import skull from "../sources/skull.png";
 import Queue from '../components/Queue';
-
+import deathSound from '../sounds/dead.mp3';
+import screamsound  from '../sounds/scream.mp3';
+import bloodychar from "../sources/charaBad.png";
 const RenderMain = ({ onBackToMenu }) => {
   const containerSize = 500;
   const squareSize = 50; // Tamaño de los cuadrados internos
   const canvasRef = useRef(null);
   const characterRef = useRef(new Image());
   const doorRef = useRef(new Image());
+  const [background, setbackground] = useState('white');
+  const [block, setblock] = useState('brown');
+  const [currentCharacterImage, setCurrentCharacterImage] = useState(char);
   const [wallDesigns] = useState(generateWallDesigns());
   const [GameOver, setGameOver]= useState(false);
   const [spikeDesigns]= useState(generateSpikeDesigns());
@@ -25,10 +30,17 @@ const RenderMain = ({ onBackToMenu }) => {
   const [characterKey, setCharacterKey] = useState(0);
   const [level, setLevel] = useState(1);
   const [lastMoveTime, setLastMoveTime] = useState(0);
-  const resetGame = () => {
-    setGameOver(true);
-    // También puedes realizar otras acciones de reinicio aquí según sea necesario
-  };
+const resetGame = () => {
+  setGameOver(true);
+
+  // Probabilidad de reproducir otro sonido: 20% (puedes ajustar esto según tus necesidades)
+
+
+
+  // También puedes realizar otras acciones de reinicio aquí según sea necesario
+};
+
+  
 
   const restartGame = () => {
     // Restablecer el estado del juego y volver al nivel 1
@@ -408,6 +420,16 @@ function generateRandomSpikes(minCount, maxCount, walls) {
       const isCollisionWithSpikes = spikePositions.some((spike) => checkOverlap(newPosition, spike));
   
       if (isCollisionWithSpikes) {
+        if (Math.random() < 0.2) {
+          // Seleccionar aleatoriamente un sonido de muerte
+          const deathAudio = new Audio(screamsound);
+          deathAudio.play();
+        } else {
+          // Reproducir el sonido de muerte predeterminado
+          const defaultDeathAudio = new Audio(deathSound);
+          defaultDeathAudio.play();
+        }
+        
         // El personaje muere al tocar una spike
         resetGame(); // Puedes definir esta función para reiniciar el juego
         return prevPosition;
@@ -418,6 +440,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   
     setCharacterKey((prev) => prev + 1);
   }
+  
   
   
 
@@ -455,7 +478,18 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     setDoorPosition(doorPosition);
     setCharacterPosition(characterPosition);
     setLevel((prevLevel) => prevLevel + 1);
-  
+    setCurrentCharacterImage(char);
+    const randomvalue =  Math.random() < ((level*1.5/100));
+    if(randomvalue){
+      setbackground('red');
+      setblock('black');
+      setCurrentCharacterImage(bloodychar);
+    }
+    else {
+      setblock('brown');
+      setbackground('white'); // Reset color to default
+    }
+
     const shouldShowVideo = Math.random() < ((level/100)); // Cambia esto según tus criterios
     setShowVideo(shouldShowVideo);
   
@@ -517,7 +551,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     ctx.clearRect(0, 0, containerSize, containerSize);
   
     // Dibujar cuadrados internos en rosado con bordes
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = background;
     ctx.strokeStyle = 'gray';  // Color del borde
     ctx.lineWidth = 2;  // Ancho del borde
   
@@ -529,7 +563,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     }
   
     const characterImg = characterRef.current;
-    characterImg.src = char;
+    characterImg.src = currentCharacterImage;
     characterImg.onload = () => {
       ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
     };
@@ -540,7 +574,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
       ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, 50, 50);
     };
   
-    ctx.fillStyle = 'brown';
+    ctx.fillStyle = block;
     wallPositions.forEach((wall) => {
       if (wall.bricks) {
         wall.bricks.forEach((brick) => {

@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import gameLogo from '../sources/puzzlelogo.png';
+import backgroundMusic from '../sounds/main.mp3'; // Reemplaza con la ruta correcta de tu archivo de música
 
 const MainMenu = ({ onStartGame, onLeaderboard }) => {
-  const containerSize = 500; // Tamaño del contenedor
-  const logoSize = 30; // Tamaño del logo
+  useEffect(() => {
+    const audio = new Audio(backgroundMusic);
+
+    const handleMouseDown = () => {
+      audio.play();
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, []);
 
   return (
     <div className="h-screen w-screen flex items-center justify-center">
