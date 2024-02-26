@@ -1,19 +1,23 @@
 {
   "files": {
-    "main.css": "/InfiniteGame/static/css/main.d68a8ccf.css",
-    "main.js": "/InfiniteGame/static/js/main.b8b84653.js",
+    "main.css": "/InfiniteGame/static/css/main.1054a92f.css",
+    "main.js": "/InfiniteGame/static/js/main.e4e7a18b.js",
     "static/js/453.407da643.chunk.js": "/InfiniteGame/static/js/453.407da643.chunk.js",
+    "static/media/main.mp3": "/InfiniteGame/static/media/main.4bf5ebdf11392fff4b4c.mp3",
     "static/media/video.mp4": "/InfiniteGame/static/media/video.200df2b7c25a094f6c94.mp4",
     "static/media/skull.png": "/InfiniteGame/static/media/skull.9b3af7b26e479ac2a0fc.png",
+    "static/media/scream.mp3": "/InfiniteGame/static/media/scream.91eca44afa0217743803.mp3",
     "static/media/door.png": "/InfiniteGame/static/media/door.11493d8a40580de29b3b.png",
-    "static/media/chara.png": "/InfiniteGame/static/media/chara.aaf437d290d8c6c113f0.png",
+    "static/media/charaBad.png": "/InfiniteGame/static/media/charaBad.71f8edabd5a2beacb57a.png",
+    "static/media/dead.mp3": "/InfiniteGame/static/media/dead.62b8990b22410f9fddb8.mp3",
+    "static/media/chara.png": "/InfiniteGame/static/media/chara.fddf7c2496d68bf761c3.png",
     "index.html": "/InfiniteGame/index.html",
-    "main.d68a8ccf.css.map": "/InfiniteGame/static/css/main.d68a8ccf.css.map",
-    "main.b8b84653.js.map": "/InfiniteGame/static/js/main.b8b84653.js.map",
+    "main.1054a92f.css.map": "/InfiniteGame/static/css/main.1054a92f.css.map",
+    "main.e4e7a18b.js.map": "/InfiniteGame/static/js/main.e4e7a18b.js.map",
     "453.407da643.chunk.js.map": "/InfiniteGame/static/js/453.407da643.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d68a8ccf.css",
-    "static/js/main.b8b84653.js"
+    "static/css/main.1054a92f.css",
+    "static/js/main.e4e7a18b.js"
   ]
 }
