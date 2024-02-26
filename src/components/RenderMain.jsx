@@ -47,7 +47,7 @@ const RenderMain = ({ onBackToMenu }) => {
     let characterPosition, doorPosition, isOverlap;
   
     do {
-      const positions = generateRandomPositionForCharacterAndDoor(walls);
+      const positions = generateRandomPositionForCharacterAndDoor(walls, spikes);
       characterPosition = positions.characterPosition;
       doorPosition = positions.doorPosition;
   
@@ -66,7 +66,7 @@ const RenderMain = ({ onBackToMenu }) => {
         return false;
       });
   
-      // Verificar si las posiciones iniciales colisionan con los pinchos
+      // Verificar si las posiciones iniciales colisionan con los muros y espigas
       const characterOverlapWithSpikes = spikes.some((spike) => checkOverlap(characterPosition, spike));
       const doorOverlapWithSpikes = spikes.some((spike) => checkOverlap(doorPosition, spike));
   
@@ -79,6 +79,7 @@ const RenderMain = ({ onBackToMenu }) => {
   
     return { characterPosition, doorPosition };
   }
+  
   
   
   function generateRandomPositionInSquare() {
@@ -149,13 +150,16 @@ function generateRandomSpikes(minCount, maxCount, walls) {
 
     do {
       randomPosition = generateRandomPositionInSquare();
-      // Verificar si hay superposición con los muros
+      // Verificar si hay superposición con los ladrillos de las paredes
       isOverlap = walls.some(wall => {
         if (wall.bricks) {
           return wall.bricks.some(brick => checkOverlap(randomPosition, brick));
         }
         return false;
       });
+
+      // También verificar la superposición directa con las coordenadas de las espigas
+      isOverlap = isOverlap || spikes.some(spike => checkOverlap(randomPosition, spike));
     } while (isOverlap);
 
     spikes.push(randomPosition);
@@ -165,40 +169,45 @@ function generateRandomSpikes(minCount, maxCount, walls) {
 }
 
 
+
   
   // ...
-  function generateRandomPositionForCharacterAndDoor(walls) {
+  function generateRandomPositionForCharacterAndDoor(walls, spikes) {
     const minDistance = 300;
     let characterPosition, doorPosition, isOverlap;
-    let allBricks = walls.flatMap(w => w.bricks);
+    let allBricks = walls.flatMap(w => w.bricks || []);
   
     do {
       characterPosition = generateRandomPositionInSquare();
       doorPosition = generateRandomPositionInSquare();
   
-      const characterOverlap = allBricks.some(brick =>
+      // Verificar superposición con los ladrillos de los muros
+      const characterOverlapWithWalls = allBricks.some(brick =>
         brick && checkOverlap(characterPosition, brick)
       );
-      const doorOverlap = allBricks.some(brick =>
+      const doorOverlapWithWalls = allBricks.some(brick =>
         brick && checkOverlap(doorPosition, brick)
       );
+  
+      // Verificar superposición con las espigas
+      const characterOverlapWithSpikes = spikes.some(spike => checkOverlap(characterPosition, spike));
+      const doorOverlapWithSpikes = spikes.some(spike => checkOverlap(doorPosition, spike));
   
       const distance = Math.hypot(
         doorPosition.x - characterPosition.x,
         doorPosition.y - characterPosition.y
       );
   
-      isOverlap = characterOverlap || doorOverlap || distance < minDistance;
-  
-      // Verificar si hay un camino entre el personaje y la puerta
-      if (!isOverlap) {
-        const pathExists = checkPathExists(characterPosition, doorPosition, walls);
-        isOverlap = !pathExists;
-      }
+      isOverlap = characterOverlapWithWalls ||
+        doorOverlapWithWalls ||
+        characterOverlapWithSpikes ||
+        doorOverlapWithSpikes ||
+        distance < minDistance;
     } while (isOverlap);
   
     return { characterPosition, doorPosition, allBricks };
   }
+  
   function checkPathExists(start, end, walls) {
     const visited = new Set();
     const queue = new Queue();
@@ -436,9 +445,10 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     // Actualizar muros antes de generar nuevas posiciones
     const newWallPositions = generateRandomWalls(3,6);
     const newSpikePositions = generateRandomSpikes(2, 6, newWallPositions);
+    console.log(newSpikePositions);
     setWallPositions(newWallPositions);
     setSpikePositions(newSpikePositions);
-    const { characterPosition, doorPosition } = generateRandomPositionForCharacterAndDoor(newWallPositions);
+    const { characterPosition, doorPosition } = generateRandomPositionForCharacterAndDoor(newWallPositions,newSpikePositions);
     console.log("Nuevas posiciones generadas:", characterPosition, doorPosition);
 
 
@@ -570,54 +580,54 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     };
   }, [lastMoveTime]);
   return (
-    <div className="flex items-center justify-center h-screen">
-      {GameOver ? (
-// Pantalla de muerte
-<div className="h-screen w-screen flex items-center justify-center">
-  <div className="bg-white border-4 border-black p-8 text-center flex flex-col items-center w-500 h-500">
-    <h1 className="text-3xl mb-4">¡You're dead!</h1>
-    <img src={skull} width={80} height={50} className="mb-4" />
-    <div className="flex space-x-4">
-    <button
-        className="px-4 py-2 bg-black text-white rounded-full hover:bg-gray-600 cursor-pointer w-32" // Ancho fijo
-        onClick={restartGame}
-      >
-        Restart
-      </button>
-      <button
-        className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 cursor-pointer w-32" // Ancho fijo
-        onClick={exitToMenu}
-      >
-        Exit
-      </button>
-    </div>
-  </div>
-</div>
-
+    <div className="flex items-center justify-center h-screen relative">
+      {/* Resto del contenido del juego */}
+      {showVideo ? (
+        <video
+          id="game-video"
+          width="100%"
+          height="100%"
+          autoPlay
+          controls={false}
+          preload="auto"
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
       ) : (
-        // Resto del contenido del juego
-        showVideo ? (
-          <video
-            id="game-video"
-            width="100%"
-            height="100%"
-            autoPlay
-            controls={false}
-            preload="auto"
-          >
-            <source src={videoUrl} type="video/mp4" />
-          </video>
-        ) : (
-          <canvas
-            ref={canvasRef}
-            className="bg-white border-8 border-black cursor-pointer"
-            width={containerSize}
-            height={containerSize}
-          />
-        )
+        <canvas
+          ref={canvasRef}
+          className="bg-white border-8 border-black cursor-pointer"
+          width={containerSize}
+          height={containerSize}
+        />
+      )}
+  
+      {/* Pantalla de muerte */}
+      {GameOver && (
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+          <div className="bg-white border-4 border-black p-8 text-center flex flex-col items-center w-500 h-500">
+            <h1 className="text-3xl mb-4">¡You're dead!</h1>
+            <img src={skull} width={80} height={50} className="mb-4" />
+            <div className="flex space-x-4">
+              <button
+                className="px-4 py-2 bg-black text-white rounded-full hover:bg-gray-600 cursor-pointer w-32"
+                onClick={restartGame}
+              >
+                Restart
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 cursor-pointer w-32"
+                onClick={exitToMenu}
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
+  
         };
 
 export default RenderMain;
