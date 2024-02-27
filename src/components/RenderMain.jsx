@@ -8,11 +8,15 @@ import Queue from '../components/Queue';
 import deathSound from '../sounds/dead.mp3';
 import screamsound  from '../sounds/scream.mp3';
 import bloodychar from "../sources/charaBad.png";
+import backgroundMusic1 from '../sounds/defaultsong.mp3';
+import darkbackgroundMusic from '../sounds/darkmain.mp3';
 const RenderMain = ({ onBackToMenu }) => {
   const containerSize = 500;
   const squareSize = 50; // Tamaño de los cuadrados internos
   const canvasRef = useRef(null);
   const characterRef = useRef(new Image());
+  const [backgroundMusic, setBackgroundMusic] = useState(backgroundMusic1);
+  const audioRef = useRef(new Audio(backgroundMusic));
   const doorRef = useRef(new Image());
   const [background, setbackground] = useState('white');
   const [block, setblock] = useState('brown');
@@ -44,6 +48,7 @@ const resetGame = () => {
 
   const restartGame = () => {
     // Restablecer el estado del juego y volver al nivel 1
+    audioRef.current.currentTime = 0;
     setGameOver(false);
     setLevel(0);
     handleLevelChange();
@@ -484,13 +489,16 @@ function generateRandomSpikes(minCount, maxCount, walls) {
       setbackground('red');
       setblock('black');
       setCurrentCharacterImage(bloodychar);
+      setBackgroundMusic(darkbackgroundMusic);
+   
     }
     else {
       setblock('brown');
-      setbackground('white'); // Reset color to default
+      setbackground('white');
+      setBackgroundMusic(backgroundMusic1); // Reset color to default
     }
 
-    const shouldShowVideo = Math.random() < ((level/100)); // Cambia esto según tus criterios
+    const shouldShowVideo = Math.random() < ((level*2)/100); // Cambia esto según tus criterios
     setShowVideo(shouldShowVideo);
   
     if (shouldShowVideo) {
@@ -539,7 +547,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   
   useEffect(() => {
     const canvas = canvasRef.current;
-  
+    const audio = audioRef.current;
     // Verificar si el canvas existe antes de continuar
     if (!canvas) {
       return;
@@ -602,7 +610,24 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   
   }, [characterKey, doorPosition, wallPositions, spikePositions, level]);
   
+  useEffect(() => {
+    // Reproducir música de fondo al cargar el componente
+    const playBackgroundMusic = () => {
+      if (audioRef.current.paused) {
+        audioRef.current.play().catch((error) => {
+          console.error('Error al reproducir música de fondo:', error);
+        });
+      }
+    };
 
+    playBackgroundMusic();
+
+    // Limpiar eventos al desmontar el componente
+    return () => {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    };
+  }, []);
 
   
 
@@ -659,6 +684,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
           </div>
         </div>
       )}
+          <audio ref={audioRef} src={backgroundMusic} loop autoPlay />
     </div>
   );
   

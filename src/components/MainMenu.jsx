@@ -1,27 +1,41 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import gameLogo from '../sources/puzzlelogo.png';
-import backgroundMusic from '../sounds/main.mp3'; // Reemplaza con la ruta correcta de tu archivo de música
+import backgroundMusic from '../sounds/main.mp3';
 
 const MainMenu = ({ onStartGame, onLeaderboard }) => {
-  useEffect(() => {
-    const audio = new Audio(backgroundMusic);
+  const audioRef = useRef(null);
 
-    const handleMouseDown = () => {
-      audio.play();
-      document.removeEventListener('mousedown', handleMouseDown);
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    // Intentar reproducir música al cargar la página
+    const playAudio = () => {
+      if (audio.paused) {
+        audio.play().catch((error) => {
+          // Manejar cualquier error aquí
+          console.error('Error al reproducir audio:', error);
+        });
+      }
     };
 
-    document.addEventListener('mousedown', handleMouseDown);
+    // Autoclic invisible al cargar la página
+    playAudio();
+
+    // Agregar el evento 'click' al contenedor principal
+    const mainContainer = document.getElementById('main-container');
+    mainContainer.addEventListener('click', playAudio);
 
     return () => {
+      // Limpiar el evento al desmontar el componente
+      mainContainer.removeEventListener('click', playAudio);
       audio.pause();
       audio.currentTime = 0;
     };
-  }, []);
+  }, []); 
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
-      <div className="bg-white border-8 border-black p-8 text-center flex flex-col items-center w-{width} h-{width}">
+    <div id="main-container" className="h-screen w-screen flex items-center justify-center">
+      <div className="bg-white border-8 border-black p-8 text-center flex flex-col items-center">
         <h1 className="text-3xl font-bold mb-4">Infinite Puzzle</h1>
         <div className="mb-8">
           <img src={gameLogo} alt="Game Logo" width={240} height={240} />
@@ -41,6 +55,8 @@ const MainMenu = ({ onStartGame, onLeaderboard }) => {
           </button>
         </div>
       </div>
+
+      <audio ref={audioRef} src={backgroundMusic} loop />
     </div>
   );
 };
