@@ -183,46 +183,56 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   }
 
   return spikes;
-}
-
-
-
-  
-  // ...
+}  // ...
   function generateRandomPositionForCharacterAndDoor(walls, spikes) {
     const minDistance = 300;
     let characterPosition, doorPosition, isOverlap;
-    let allBricks = walls.flatMap(w => w.bricks || []);
   
     do {
       characterPosition = generateRandomPositionInSquare();
       doorPosition = generateRandomPositionInSquare();
   
       // Verificar superposición con los ladrillos de los muros
-      const characterOverlapWithWalls = allBricks.some(brick =>
-        brick && checkOverlap(characterPosition, brick)
+      const characterOverlapWithWalls = walls.some(wall =>
+        wall.bricks.some(brick => checkOverlap(characterPosition, brick))
       );
-      const doorOverlapWithWalls = allBricks.some(brick =>
-        brick && checkOverlap(doorPosition, brick)
+      const doorOverlapWithWalls = walls.some(wall =>
+        wall.bricks.some(brick => checkOverlap(doorPosition, brick))
       );
   
       // Verificar superposición con las espigas
-      const characterOverlapWithSpikes = spikes.some(spike => checkOverlap(characterPosition, spike));
-      const doorOverlapWithSpikes = spikes.some(spike => checkOverlap(doorPosition, spike));
+      const characterOverlapWithSpikes = spikes.some(spike =>
+        checkOverlap(characterPosition, spike)
+      );
+      const doorOverlapWithSpikes = spikes.some(spike =>
+        checkOverlap(doorPosition, spike)
+      );
   
       const distance = Math.hypot(
         doorPosition.x - characterPosition.x,
         doorPosition.y - characterPosition.y
       );
   
-      isOverlap = characterOverlapWithWalls ||
+      isOverlap =
+        characterOverlapWithWalls ||
         doorOverlapWithWalls ||
         characterOverlapWithSpikes ||
         doorOverlapWithSpikes ||
-        distance < minDistance;
+        distance < minDistance ||
+        !isPathValid(characterPosition, doorPosition, walls, spikes);
     } while (isOverlap);
   
-    return { characterPosition, doorPosition, allBricks };
+    return { characterPosition, doorPosition };
+  }
+  
+  function isPathValid(start, end, walls, spikes) {
+    // Implementa aquí la lógica para verificar si hay un camino válido entre start y end
+    // Puedes usar BFS u otro algoritmo de búsqueda de camino
+    // Devuelve true si hay un camino válido, false de lo contrario
+    // ...
+  
+    // Ejemplo simple que no tiene en cuenta las paredes o espigas
+    return true;
   }
   
   function checkPathExists(start, end, walls) {
