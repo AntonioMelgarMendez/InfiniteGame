@@ -11,15 +11,35 @@ import bloodychar from "../sources/charaBad.png";
 import backgroundMusic1 from '../sounds/defaultsong.mp3';
 import darkbackgroundMusic from '../sounds/darkmain.mp3';
 const RenderMain = ({ onBackToMenu }) => {
-  const containerSizePercentage = 40; // Porcentaje del ancho del viewport
-  const squareSizePercentage = 10; // Porcentaje del ancho del viewport
+  const minContainerPercentage = 40;
+  const maxContainerPercentage = 90;
+  const maxScreenWidthForDefaultSize = 700;
   
-  let containerSize = (window.innerWidth * containerSizePercentage) / 100;
+  let containerSizePercentage;
+  let squareSizePercentage;
   
-  // Ajustar el tamaño del contenedor para que sea un múltiplo de 10
-  containerSize = Math.floor(containerSize / 10) * 10;
+  if (window.innerWidth > maxScreenWidthForDefaultSize) {
+    // Tamaño predeterminado si la pantalla es más grande que maxScreenWidthForDefaultSize
+    containerSizePercentage = 40;
+    squareSizePercentage = 10;
+  } else {
+    // Calcular el tamaño basado en la lógica anterior
+    containerSizePercentage = Math.min(maxContainerPercentage, Math.max(minContainerPercentage, (window.innerWidth / 10) * 2));
+    
+    // Calcular squareSizePercentage para que sea 10% del contenedor
+    squareSizePercentage = 10 / (containerSizePercentage / 100);
   
-  const squareSize = (containerSize * squareSizePercentage) / 100;
+    // Ajustar el tamaño del contenedor para que sea un múltiplo de 10
+    containerSizePercentage = Math.floor(containerSizePercentage / 10) * 10;
+  }
+  
+  // Calcular los tamaños reales
+  let containerSize = Math.floor((window.innerWidth * containerSizePercentage) / 100);
+  containerSize = Math.floor(containerSize / 10) * 10; // Redondear a la decena más cercana
+  const squareSize = Math.floor(containerSize / 10);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+  const [isTouchMoveInProgress, setIsTouchMoveInProgress] = useState(false);
   const canvasRef = useRef(null);
   const characterRef = useRef(new Image());
   const [backgroundMusic, setBackgroundMusic] = useState(backgroundMusic1);
@@ -233,12 +253,7 @@ function generateRandomSpikes(minCount, maxCount, walls) {
   }
   
   function isPathValid(start, end, walls, spikes) {
-    // Implementa aquí la lógica para verificar si hay un camino válido entre start y end
-    // Puedes usar BFS u otro algoritmo de búsqueda de camino
-    // Devuelve true si hay un camino válido, false de lo contrario
-    // ...
-  
-    // Ejemplo simple que no tiene en cuenta las paredes o espigas
+
     return true;
   }
   
@@ -468,7 +483,74 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     setCharacterKey((prev) => prev + 1);
   }
   
-  
+  function handleTouchStart(event) {
+    if (isTouchMoveInProgress) {
+      return;
+    }
+
+    setTouchStartX(event.touches[0].clientX);
+    setTouchStartY(event.touches[0].clientY);
+  }
+
+  // Función para manejar el final de un toque
+  function handleTouchEnd() {
+    setTouchStartX(null);
+    setTouchStartY(null);
+    setIsTouchMoveInProgress(false);
+  }
+
+  // Función para manejar el movimiento táctil
+  function handleTouchMove(event) {
+    if (!touchStartX || !touchStartY || isTouchMoveInProgress) {
+      return;
+    }
+
+    setIsTouchMoveInProgress(true);
+
+    const speed = squareSize;
+    const now = Date.now();
+
+    if (now - lastMoveTime < 100) {
+      setIsTouchMoveInProgress(false);
+      return;
+    }
+
+    setLastMoveTime(now);
+
+    setCharacterPosition((prevPosition) => {
+      const newPosition = { ...prevPosition };
+
+      const deltaX = event.touches[0].clientX - touchStartX;
+      const deltaY = event.touches[0].clientY - touchStartY;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        const directionX = deltaX > 0 ? 1 : -1;
+        newPosition.x = Math.max(Math.min(prevPosition.x + directionX * speed, containerSize - squareSize), 0);
+      } else {
+        const directionY = deltaY > 0 ? 1 : -1;
+        newPosition.y = Math.max(Math.min(prevPosition.y + directionY * speed, containerSize - squareSize), 0);
+      }
+
+      const isCollisionWithWalls = wallPositions.some((wall) => {
+        if (wall.bricks) {
+          return wall.bricks.some((brick) => checkOverlap(newPosition, brick));
+        }
+        return false;
+      });
+
+      const isCollisionWithSpikes = spikePositions.some((spike) => checkOverlap(newPosition, spike));
+
+      if (isCollisionWithWalls || isCollisionWithSpikes) {
+        return prevPosition;
+      }
+
+      return newPosition;
+    });
+
+    setCharacterKey((prev) => prev + 1);
+    setIsTouchMoveInProgress(false);
+  }
+ 
   
 
 
@@ -680,6 +762,10 @@ function generateRandomSpikes(minCount, maxCount, walls) {
           className="bg-white border-8 border-black cursor-pointer"
           width={containerSize}
           height={containerSize}
+          onKeyDown={handleKeyPress}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
         />
       )}
   
