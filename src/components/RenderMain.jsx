@@ -11,8 +11,15 @@ import bloodychar from "../sources/charaBad.png";
 import backgroundMusic1 from '../sounds/defaultsong.mp3';
 import darkbackgroundMusic from '../sounds/darkmain.mp3';
 const RenderMain = ({ onBackToMenu }) => {
-  const containerSize = 500;
-  const squareSize = 50; // Tamaño de los cuadrados internos
+  const containerSizePercentage = 40; // Porcentaje del ancho del viewport
+  const squareSizePercentage = 10; // Porcentaje del ancho del viewport
+  
+  let containerSize = (window.innerWidth * containerSizePercentage) / 100;
+  
+  // Ajustar el tamaño del contenedor para que sea un múltiplo de 10
+  containerSize = Math.floor(containerSize / 10) * 10;
+  
+  const squareSize = (containerSize * squareSizePercentage) / 100;
   const canvasRef = useRef(null);
   const characterRef = useRef(new Image());
   const [backgroundMusic, setBackgroundMusic] = useState(backgroundMusic1);
@@ -111,18 +118,18 @@ const resetGame = () => {
 function checkOverlap(position, obstacle) {
   if (obstacle.bricks) {
     return obstacle.bricks.some((brick) =>
-      position.x < brick.x + 50 &&
-      position.x + 50 > brick.x &&
-      position.y < brick.y + 50 &&
-      position.y + 50 > brick.y
+      position.x < brick.x + squareSize &&
+      position.x + squareSize > brick.x &&
+      position.y < brick.y + squareSize &&
+      position.y + squareSize > brick.y
     );
   } else {
     // Considerar las coordenadas directas para las espigas
     return (
-      position.x < obstacle.x + 50 &&
-      position.x + 50 > obstacle.x &&
-      position.y < obstacle.y + 50 &&
-      position.y + 50 > obstacle.y
+      position.x < obstacle.x + squareSize &&
+      position.x + squareSize > obstacle.x &&
+      position.y < obstacle.y + squareSize &&
+      position.y + squareSize > obstacle.y
     );
   }
 }
@@ -269,127 +276,132 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     // No se encontró un camino
     return false;
   }
+
   function generateWallDesigns() {
+    const factor = squareSize ;
+  
     return [
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 100, y: 0 },
-        { x: 150, y: 0 },
+        { x: 1 * factor, y: 0 },
+        { x: 2 * factor, y: 0 },
+        { x: 3 * factor, y: 0 },
       ],
       [
         { x: 0, y: 0 },
-        { x: 0, y: 50 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 50, y: 0 },
+        { x: 0, y: 1 * factor },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 1 * factor, y: 0 },
       ],
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 100, y: 100 },
+        { x: 1 * factor, y: 0 },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 2 * factor },
       ],
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 100, y: 100 },
-        { x: 150, y: 100 },
+        { x: 1 * factor, y: 0 },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 2 * factor },
+        { x: 3 * factor, y: 2 * factor },
       ],
       [
         { x: 0, y: 0 },
-        { x: 0, y: 50 },
-        { x: 0, y: 100 },
-        { x: 0, y: 150 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 150, y: 50 },
-        { x: 100, y: 0 },
-        { x: 100, y: 100 },
+        { x: 0, y: 1 * factor },
+        { x: 0, y: 2 * factor },
+        { x: 0, y: 3 * factor },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 3 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 0 },
+        { x: 2 * factor, y: 2 * factor },
       ],
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 100, y: 0 },
-        { x: 150, y: 0 },
+        { x: 1 * factor, y: 0 },
+        { x: 2 * factor, y: 0 },
+        { x: 3 * factor, y: 0 },
       ],
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 100, y: 100 },
-        { x: 150, y: 100 },
+        { x: 0, y: 1 * factor },
+        { x: 0, y: 2 * factor },
+        { x: 0, y: 3 * factor },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 3 * factor, y: 1 * factor },
       ],
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 100, y: 0 },
-        { x: 100, y: 50 },
-        { x: 100, y: 100 },
+        { x: 1 * factor, y: 0 },
+        { x: 2 * factor, y: 0 },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 2 * factor },
       ],
-          [
-      { x: 0, y: 0 },
-      { x: 25, y: 50 },
-      { x: 50, y: 0 },
-      { x: 75, y: 50 },
-      { x: 100, y: 0 },
-    ],
-    [
-      { x: 0, y: 0 },
-      { x: 0, y: 50 },
-      { x: 50, y: 50 },
-      { x: 100, y: 50 },
-      { x: 150, y: 50 },
-      { x: 150, y: 0 },
-    ],
-    [
-      { x: 0, y: 0 },
-      { x: 50, y: 0 },
-      { x: 100, y: 0 },
-      { x: 75, y: 50 },
-      { x: 50, y: 100 },
-      { x: 25, y: 50 },
-    ],
-    [
-    { x: 0, y: 0 },
-    { x: 50, y: 0 },
-    { x: 50, y: 50 },
-    { x: 100, y: 50 },
-    { x: 100, y: 100 },
-    { x: 50, y: 100 },
-    { x: 50, y: 150 },
-    { x: 0, y: 150 },
-    { x: 0, y: 100 },
-    { x: -50, y: 100 },
-    { x: -50, y: 50 },
-    { x: 0, y: 50 },
-  ]
+      [
+        { x: 0, y: 0 },
+        { x: 0.5 * factor, y: 1 * factor },
+        { x: 1 * factor, y: 0 },
+        { x: 1.5 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 0 },
+      ],
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 1 * factor },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 3 * factor, y: 1 * factor },
+        { x: 3 * factor, y: 0 },
+      ],
+      [
+        { x: 0, y: 0 },
+        { x: 1 * factor, y: 0 },
+        { x: 2 * factor, y: 0 },
+        { x: 1.5 * factor, y: 1 * factor },
+        { x: 1 * factor, y: 2 * factor },
+        { x: 0.5 * factor, y: 1 * factor },
+      ],
+      [
+        { x: 0, y: 0 },
+        { x: 1 * factor, y: 0 },
+        { x: 1 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 1 * factor },
+        { x: 2 * factor, y: 2 * factor },
+        { x: 1 * factor, y: 2 * factor },
+        { x: 1 * factor, y: 3 * factor },
+        { x: 0, y: 3 * factor },
+        { x: 0, y: 2 * factor },
+        { x: -1 * factor, y: 2 * factor },
+        { x: -1 * factor, y: 1 * factor },
+        { x: 0, y: 1 * factor },
+      ],
     ];
   }
+  
   function generateSpikeDesigns() {
     return [
       [
         { x: 0, y: 0 },
-        { x: 50, y: 0 },
-        { x: 100, y: 0 },
-        { x: 150, y: 0 },
+        { x: squareSize, y: 0 },
+        { x: 2*squareSize, y: 0 },
+        { x: 3*squareSize, y: 0 },
       ],
       [
         { x: 0, y: 0 },
-        { x: 0, y: 50 },
-        { x: 50, y: 50 },
-        { x: 100, y: 50 },
-        { x: 50, y: 0 },
+        { x: 0, y: squareSize },
+        { x: squareSize, y: squareSize },
+        { x: 2*squareSize, y: squareSize },
+        { x: squareSize, y: 0 },
       ]
   ];
   }
 
   function handleKeyPress(event) {
-    const speed = 50;
+    const speed = squareSize;
     const now = Date.now();
   
     if (now - lastMoveTime < 100) {
@@ -409,10 +421,10 @@ function generateRandomSpikes(minCount, maxCount, walls) {
           newPosition.y = Math.max(prevPosition.y - speed, 0);
           break;
         case 's':
-          newPosition.y = Math.min(prevPosition.y + speed, containerSize - 50);
+          newPosition.y = Math.min(prevPosition.y + speed, containerSize - squareSize);
           break;
         case 'd':
-          newPosition.x = Math.min(prevPosition.x + speed, containerSize - 50);
+          newPosition.x = Math.min(prevPosition.x + speed, containerSize - squareSize);
           break;
         default:
           return prevPosition;
@@ -462,10 +474,10 @@ function generateRandomSpikes(minCount, maxCount, walls) {
 
   function isCharacterTouchingDoor() {
     return (
-      characterPosition.x < doorPosition.x + 50 &&
-      characterPosition.x + 50 > doorPosition.x &&
-      characterPosition.y < doorPosition.y + 50 &&
-      characterPosition.y + 50 > doorPosition.y
+      characterPosition.x < doorPosition.x + squareSize &&
+      characterPosition.x + squareSize > doorPosition.x &&
+      characterPosition.y < doorPosition.y + squareSize &&
+      characterPosition.y + squareSize > doorPosition.y
     );
   }
 
@@ -583,20 +595,20 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     const characterImg = characterRef.current;
     characterImg.src = currentCharacterImage;
     characterImg.onload = () => {
-      ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, 50, 50);
+      ctx.drawImage(characterImg, characterPosition.x, characterPosition.y, squareSize, squareSize);
     };
   
     const doorImg = doorRef.current;
     doorImg.src = door;
     doorImg.onload = () => {
-      ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, 50, 50);
+      ctx.drawImage(doorImg, doorPosition.x, doorPosition.y, squareSize, squareSize);
     };
   
     ctx.fillStyle = block;
     wallPositions.forEach((wall) => {
       if (wall.bricks) {
         wall.bricks.forEach((brick) => {
-          ctx.fillRect(brick.x, brick.y, 50, 50);
+          ctx.fillRect(brick.x, brick.y, squareSize, squareSize);
         });
       }
     });
@@ -605,9 +617,9 @@ function generateRandomSpikes(minCount, maxCount, walls) {
     ctx.fillStyle = 'gray'; // Cambia el color a gris
     spikePositions.forEach((spike) => {
       const spikeVertices = [
-        { x: spike.x + 25, y: spike.y }, // Punto superior
-        { x: spike.x, y: spike.y + 50 }, // Punto inferior izquierdo
-        { x: spike.x + 50, y: spike.y + 50 } // Punto inferior derecho
+        { x: spike.x + (squareSize/2), y: spike.y }, // Punto superior
+        { x: spike.x, y: spike.y + squareSize }, // Punto inferior izquierdo
+        { x: spike.x + squareSize, y: spike.y + squareSize } // Punto inferior derecho
       ];
     
       fillPolygon(ctx, spikeVertices);
