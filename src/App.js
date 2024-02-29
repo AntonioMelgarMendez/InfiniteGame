@@ -21,12 +21,11 @@ const App = () => {
   const handleLeaderboard = () => {
     // Simula datos de leaderboard, reemplázalos con tu lógica de obtención de datos reales
     const fakeLeaderboardData = [
-      { name: 'Usuario1', level: 10 },
-      { name: 'Usuario2', level: 8 },
-      { name: 'Usuario3', level: 6 },
-      {name:'Usuario4', level:7},
-      {name:'Usuario10',level:10},
-      
+      { name: 'Daniel', level: 99, avatar: {} },
+      { name: 'Ozuna', level: 78, avatar: {} },
+      { name: 'Travis', level: 70, avatar: {} },
+      { name: 'DevilMan', level: 66, avatar: {} },
+      { name: 'Maradona', level: 10, avatar: {} },
       // ... más datos ...
     ];
 

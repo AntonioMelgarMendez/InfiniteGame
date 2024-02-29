@@ -61,13 +61,46 @@ const RenderMain = ({ onBackToMenu }) => {
   const [characterKey, setCharacterKey] = useState(0);
   const [level, setLevel] = useState(1);
   const [lastMoveTime, setLastMoveTime] = useState(0);
+  const sendDeathInfoToServer = (level) => {
+    // Reemplaza la URL con la dirección de tu servidor
+    const serverUrl = 'https://tu-servidor.com/api/registrar-muerte';
+  
+    // Reemplaza 'nombrePorDefecto' con el nombre del jugador (puedes obtenerlo de alguna forma)
+    const playerName = 'nombrePorDefecto';
+  
+    // Crear un objeto con la información a enviar
+    const deathInfo = {
+      playerName: playerName,
+      level: level,
+    };
+  
+    // Realizar la solicitud al servidor usando fetch
+    fetch(serverUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(deathInfo),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error al enviar la información al servidor');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Manejar la respuesta del servidor si es necesario
+        console.log('Respuesta del servidor:', data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  };
+  
 const resetGame = () => {
   setGameOver(true);
-
+  sendDeathInfoToServer(level);
   // Probabilidad de reproducir otro sonido: 20% (puedes ajustar esto según tus necesidades)
-
-
-
   // También puedes realizar otras acciones de reinicio aquí según sea necesario
 };
 
@@ -540,10 +573,24 @@ function generateRandomSpikes(minCount, maxCount, walls) {
 
       const isCollisionWithSpikes = spikePositions.some((spike) => checkOverlap(newPosition, spike));
 
-      if (isCollisionWithWalls || isCollisionWithSpikes) {
+      if (isCollisionWithWalls) {
         return prevPosition;
       }
-
+      if (isCollisionWithSpikes) {
+        if (Math.random() < 0.2) {
+          // Seleccionar aleatoriamente un sonido de muerte
+          const deathAudio = new Audio(screamsound);
+          deathAudio.play();
+        } else {
+          // Reproducir el sonido de muerte predeterminado
+          const defaultDeathAudio = new Audio(deathSound);
+          defaultDeathAudio.play();
+        }
+        
+        // El personaje muere al tocar una spike
+        resetGame(); // Puedes definir esta función para reiniciar el juego
+        return prevPosition;
+      }
       return newPosition;
     });
 
