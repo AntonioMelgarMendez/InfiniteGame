@@ -7,7 +7,7 @@ import Leaderboard from './components/LeaderBoard';
 const App = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardData, setLeaderboardData] = useState([]); // Agrega este estado
+  const [leaderboardData, setLeaderboardData] = useState([]);
 
   const handleStartGame = () => {
     setGameStarted(true);
@@ -39,7 +39,7 @@ const App = () => {
         <RenderMain onBackToMenu={handleBackToMenu} />
       ) : (
         showLeaderboard ? (
-          <Leaderboard leaderboardData={leaderboardData} />
+          <Leaderboard leaderboardData={leaderboardData} onBackToMenu={handleBackToMenu} />
         ) : (
           <MainMenu onStartGame={handleStartGame} onLeaderboard={handleLeaderboard} />
         )

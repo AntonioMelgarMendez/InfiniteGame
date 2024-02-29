@@ -1,8 +1,14 @@
+// Leaderboard.js
 import React from 'react';
 import './style.css';
 
-const Leaderboard = ({ leaderboardData }) => {
+const Leaderboard = ({ leaderboardData, onBackToMenu }) => {
   const robohashBaseUrl = 'https://robohash.org/';
+
+  const handleBackToMenuClick = () => {
+    // Llama a la función proporcionada por prop para regresar al menú principal
+    onBackToMenu();
+  };
 
   return (
     <div className="flex flex-col items-center justify-center w-screen h-screen">
@@ -36,6 +42,12 @@ const Leaderboard = ({ leaderboardData }) => {
           </ul>
         </div>
       </div>
+      <button
+        className="mt-4 p-2 bg-black text-white rounded"
+        onClick={handleBackToMenuClick}
+      >
+        Back to Menu 
+      </button>
     </div>
   );
 };
